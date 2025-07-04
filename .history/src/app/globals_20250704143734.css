@@ -1,0 +1,343 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap');
+@import "tailwindcss";
+
+
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+html {
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+body {
+  /* background: var(--background); */
+  font-family: "Noto Sans TC", sans-serif !important;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  background: url("/home_bg.png") no-repeat center center;
+  background-color: #ffffff;
+  background-size: cover;
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* .sig-canvas {
+  width: 100vw;
+  height: 100vh;
+} */
+
+.sig-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* 如果你想防止用户滚动或者拖动 */
+  touch-action: none;
+  background-size: 60%;
+  /* 或者使用 contain，取决于你想要的效果 */
+  background-position: center;
+  background-repeat: no-repeat;
+  transform: translateY(-60px);
+
+}
+
+/* 确保父容器也是全屏的 */
+.canvas-container {
+  /* 给 canvas 的父元素添加这个类名 */
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+/* ----------- 签名页面 ------------ */
+.signature-page {
+  color: white;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 500;
+  margin-top: 94px;
+
+}
+
+.signature-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.signature-buttons {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+}
+
+.clear-button {
+  width: 422px;
+  height: 84px;
+  cursor: pointer;
+  border-radius: 100px;
+  font-size: 32px;
+  font-weight: 500;
+  color: white;
+  background: linear-gradient(90deg, #48144D 0%, #782280 50%, #18071A 100%);
+  box-shadow: 0px 4px 4px 0px #0000001F;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.confirm-button {
+  width: 422px;
+  height: 84px;
+  cursor: pointer;
+  border-radius: 100px;
+  font-size: 32px;
+  font-weight: 500;
+  color: white;
+  border: none;
+  background: linear-gradient(180deg, #764C1D 7.14%, #FBA919 52.17%, #B97B1B 97.21%);
+  box-shadow: 0px 4px 4px 0px #0000001F;
+
+}
+
+.button-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button:active {
+  background: none;
+}
+
+.display-menu {
+  width: 100%;
+  height: 92px;
+}
+
+
+/* 嘉宾模式 */
+
+.guest-top {
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(179deg, #764C1D 7.14%, #FBA919 52.17%, #B97B1B 97.21%);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.guest-bottom {
+  width: 100%;
+  height: 36px;
+  background: linear-gradient(179deg, #764C1D 7.14%, #FBA919 52.17%, #B97B1B 97.21%);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+}
+
+.guest-list {
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.guest-list-item {
+  width: 180px;
+  height: 180px;
+  background: #782280;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: 500;
+  color: white;
+}
+
+/* 承诺书 */
+.promise-page {
+  width: 55%;
+  height: 614px;
+  background: url("/promise_bg.png") no-repeat center center;
+  background-size: cover;
+  margin: 0 auto;
+  padding: 44px 56px;
+  color: #000000;
+  font-size: 38px;
+  font-weight: 500;
+  line-height: 52px;
+  text-align: left;
+  line-height: 63px;
+  letter-spacing: 6px;
+  position: relative;
+  text-align: left;
+  border-radius: 24px;
+}
+
+/* FullSpin 组件样式 */
+.full-spin-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.full-spin-container {
+  width: 150px;
+  height: 130px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 成功页面 */
+.success-page {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.success-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 35px;
+  padding-top: 280px;
+}
+
+
+
+
+/* 签名展示页面 */
+.sig-show-page {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  color: white;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 500;
+}
+
+.guest-messages-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  max-width: 80%;
+  max-height: 60%;
+}
+
+
+.guest-message-item {
+  flex-shrink: 0;
+}
+
+.messages-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.message-item {
+  position: absolute;
+  pointer-events: none;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.guest-message-0 {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.guest-message-1 {
+  transform: translateX(50%);
+}
+
+.guest-message-2 {
+  transform: translateX(50%);
+}
+
+.guest-message-3 {
+  transform: translateX(-50%);
+}
+
+.guest-message-4 {
+  transform: translateX(50%);
+}
