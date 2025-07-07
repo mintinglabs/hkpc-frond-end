@@ -38,7 +38,11 @@ export function useSocket(serverUrl: string, onMessage: (data: any) => void) {
       // 确认收到消息
       socketRef?.current?.emit(
         "message",
-        JSON.stringify({ event: "ackdata", dataId: message.idata.id })
+        JSON.stringify({
+          event: "ackdata",
+          dataId: message.idata.id,
+          jobId: message.idata.jobId,
+        })
       );
     });
 
