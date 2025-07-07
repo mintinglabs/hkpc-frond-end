@@ -179,9 +179,9 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="w-full h-screen relative overflow-hidden bg-black">
+    <div className="w-full h-screen relative overflow-hidden bg-[url('/sig-show_bg.png')] bg-cover bg-center">
       {/* guestMessages 居中 */}
-      <div className="w-[1000px] h-[419px] border-[1px] border-[#EB5757] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
+      <div className="w-[1000px] h-[419px] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
         {guestMessages.map((item, index) => (
           <img
             key={index}
