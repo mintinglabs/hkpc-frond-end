@@ -51,7 +51,8 @@ export function useSocket(serverUrl: string, onMessage: (data: any) => void) {
         socketRef.current.disconnect();
       }
     };
-  }, [serverUrl, onMessage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverUrl]);
 
   // 返回 socket 实例，方便外部使用
   return socketRef.current;

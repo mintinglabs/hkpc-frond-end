@@ -4,9 +4,10 @@ import SignatureCanvas from "react-signature-canvas";
 import { uploadSigFile } from "../../apis/business";
 import Image from "next/image";
 import FullSpin from "../../components/FullSpin";
+import "animate.css";
 // import { useWebSocket } from "../../hooks/websocket";
 
-const GUEST_LIST = ["嘉宾 1", "嘉宾 2", "嘉宾 3", "嘉宾 4", "嘉宾 5"];
+const GUEST_LIST = ["簡啟恩", "李力持", "周一鳴", "鄧飛", "葉雲龍"];
 
 export default function Home() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,6 +22,18 @@ export default function Home() {
   const [hasSuccess, setHasSuccess] = useState(false);
   const [dataURL, setDataURL] = useState("");
   const [hasThanks, setHasThanks] = useState(true);
+  const [imageAnimation, setImageAnimation] = useState(false);
+  const [successAnimation, setSuccessAnimation] = useState(false);
+
+  const [guestId, setGuestId] = useState(0);
+
+  const [randomColor, setRandomColor] = useState(0);
+  const [randomShield, setRandomShield] = useState(0);
+
+  useEffect(() => {
+    setRandomColor(Math.floor(Math.random() * 3));
+    setRandomShield(Math.floor(Math.random() * 3));
+  }, []);
 
   const clear = () => {
     setClearCount(clearCount + 1);
@@ -37,6 +50,63 @@ export default function Home() {
     setHasSig(false);
     sigRef?.current?.clear();
   };
+  // 压缩图片的函数
+  const compressImage = (
+    canvas: HTMLCanvasElement,
+    targetSizeKB: number = 500
+  ): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const compressWithSize = (maxWidth: number, maxHeight: number): void => {
+        // 计算压缩后的尺寸
+        let { width, height } = canvas;
+
+        // 如果图片太大，按比例缩小
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.floor(width * ratio);
+          height = Math.floor(height * ratio);
+        }
+
+        // 创建压缩用的canvas
+        const compressedCanvas = document.createElement("canvas");
+        const compressedCtx = compressedCanvas.getContext("2d");
+        if (!compressedCtx) {
+          canvas.toBlob((blob) => {
+            resolve(blob || new Blob());
+          }, "image/png");
+          return;
+        }
+
+        // 设置压缩后的尺寸
+        compressedCanvas.width = width;
+        compressedCanvas.height = height;
+
+        // 绘制压缩后的图片
+        compressedCtx.drawImage(canvas, 0, 0, width, height);
+
+        // 转换为blob，使用PNG格式保持透明
+        compressedCanvas.toBlob((blob) => {
+          if (!blob) {
+            resolve(new Blob());
+            return;
+          }
+
+          // 检查文件大小
+          const sizeKB = blob.size / 1024;
+          if (sizeKB <= targetSizeKB || (maxWidth <= 400 && maxHeight <= 300)) {
+            resolve(blob);
+          } else {
+            // 如果文件还是太大，继续缩小尺寸
+            compressWithSize(maxWidth - 100, maxHeight - 75);
+          }
+        }, "image/png");
+      };
+
+      // 从1200x900开始压缩
+      compressWithSize(1200, 900);
+    });
+  };
+
   const save = async () => {
     if (!hasSig) return;
     const canvas = sigRef?.current?.getCanvas();
@@ -90,31 +160,28 @@ export default function Home() {
         // 再绘制签名内容
         tempCtx.drawImage(canvas, 0, 0);
 
-        // 获取合并后的数据
-        const dataUrl = tempCanvas.toDataURL("image/png");
+        // 压缩图片到500KB以下
+        const compressedBlob = await compressImage(tempCanvas, 500);
+
+        // 获取压缩后的dataURL用于显示
+        const dataUrl = URL.createObjectURL(compressedBlob);
         setDataURL(dataUrl);
-        // 转换为 blob
-        const base64 = dataUrl.split(",")[1];
-        const binary = atob(base64);
-        const len = binary.length;
-        const buffer = new Uint8Array(len);
-
-        for (let i = 0; i < len; i++) {
-          buffer[i] = binary.charCodeAt(i);
-        }
-
-        const blob = new Blob([buffer], { type: "image/png" });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const res: any = await uploadSigFile(
-          { file: blob as File },
+          { file: compressedBlob as File },
           guestMode ? 1 : 0,
-          "ab.png"
+          "ab.png",
+          guestMode ? guestId : undefined
         );
 
         if (res.code === 200) {
           if (!guestMode) {
             setHasPromise(true);
+            // 动画完成后重置状态
+            setTimeout(() => {
+              setImageAnimation(false);
+            }, 600);
             return;
           }
           setHasSuccess(true);
@@ -130,11 +197,21 @@ export default function Home() {
       }
     };
 
-    bgImage.src = guestMode ? "/an_guest.png" : "/an.png";
+    bgImage.src = guestMode
+      ? "/an_guest.png"
+      : ["/an.png", "/an1.png", "/an2.png"][randomShield];
   };
 
+  const [promiseAnimation, setPromiseAnimation] = useState(true);
   const sendPromise = () => {
-    setHasSuccess(true);
+    setPromiseAnimation(false);
+    setTimeout(() => {
+      setHasSuccess(true);
+      // 在 hasSuccess 设置为 true 后，延迟一点再开始动画
+      setTimeout(() => {
+        setSuccessAnimation(true);
+      }, 50);
+    }, 600);
   };
 
   const openDisplayMenu = () => {
@@ -151,10 +228,15 @@ export default function Home() {
 
   useEffect(() => {
     if (hasSuccess) {
+      if (guestMode) {
+        setHasThanks(false);
+        return;
+      }
       setTimeout(() => {
         setHasThanks(false);
       }, 3000);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasSuccess]);
   return (
     <div className="signature-page">
@@ -163,7 +245,11 @@ export default function Home() {
           {hasPromise ? (
             <>
               <div style={{ marginBottom: 52 }}>「國家安全，人人有責」</div>
-              <div className="promise-page">
+              <div
+                className={`promise-page animate__animated ${
+                  promiseAnimation ? "animate__fadeIn" : "animate__fadeOut"
+                }`}
+              >
                 <Image
                   style={{
                     position: "absolute",
@@ -185,17 +271,26 @@ export default function Home() {
                 >
                   我承諾繼續推廣國家安全，鼓勵大家共同築建國安護盾以守護家園，並邀請親友一同肩負這份責任，以實際行動共同維護國家的和諧與穩定。
                 </div>
-                <Image
-                  style={{
-                    position: "absolute",
-                    bottom: 48,
-                    right: 48,
-                  }}
-                  src={dataURL}
-                  alt="promise"
-                  width={150}
-                  height={180}
-                />
+                {promiseAnimation && (
+                  <Image
+                    style={{
+                      position: "absolute",
+                      bottom: !imageAnimation ? 48 : "50%",
+                      right: !imageAnimation ? 48 : "50%",
+                      transform: !imageAnimation
+                        ? "scale(1)"
+                        : "translate(50%, 50%) scale(4.0)",
+                      transition:
+                        "all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                      zIndex: imageAnimation ? 1 : 1000,
+                    }}
+                    src={dataURL}
+                    alt="promise"
+                    width={150}
+                    height={180}
+                  />
+                )}
+
                 <Image
                   style={{
                     position: "absolute",
@@ -225,13 +320,25 @@ export default function Home() {
                   <div className="guest-bottom" />
                 </>
               )}
-              {guestMode && !gusetStartSig && <div>嘉賓位置編號</div>}
-              {!guestMode || gusetStartSig ? <div>請在盾上簽名</div> : null}
+              {guestMode && !gusetStartSig && (
+                <div className="animate__animated animate__fadeIn">
+                  嘉賓位置編號
+                </div>
+              )}
+              {!guestMode || gusetStartSig ? (
+                <div className="animate__animated animate__fadeIn">
+                  請在盾上簽名
+                </div>
+              ) : null}
               {(!guestMode || gusetStartSig) && (
-                <div>
+                <div className="animate__animated animate__fadeIn">
                   <SignatureCanvas
                     ref={sigRef}
-                    penColor={guestMode ? "#782280" : "#0040A4"}
+                    penColor={
+                      guestMode
+                        ? "#782280"
+                        : ["#0040A4", "#6CBAFF", "#0087D4"][randomColor]
+                    }
                     minWidth={2} // 最小笔触宽度
                     maxWidth={8}
                     onBegin={() => {
@@ -243,13 +350,15 @@ export default function Home() {
                         width: "100%",
                         height: "100%",
                         backgroundImage: `url(${
-                          guestMode ? "/an_guest.png" : "/an.png"
+                          guestMode
+                            ? "/an_guest.png"
+                            : ["/an.png", "/an1.png", "/an2.png"][randomShield]
                         })`,
                       },
                     }}
                   />
 
-                  <div className="signature-buttons">
+                  <div className="signature-buttons animate__animated animate__fadeIn">
                     <button
                       className={`clear-button ${
                         !hasSig ? "button-disabled" : ""
@@ -268,26 +377,35 @@ export default function Home() {
                       className={`confirm-button ${
                         !hasSig ? "button-disabled" : ""
                       }`}
-                      onClick={save}
+                      onClick={() => {
+                        setImageAnimation(true);
+                        setTimeout(() => {
+                          save();
+                        }, 50);
+                      }}
                     >
-                      確認
+                      {!guestMode ? "確認" : "送出承諾"}
                     </button>
                     <div
-                      onClick={openDisplayMenu}
-                      className="display-menu"
+                      style={{
+                        width: "100%",
+                        height: "92px",
+                      }}
                     ></div>
                   </div>
                 </div>
               )}
 
               {guestMode && !gusetStartSig && (
-                <div className="guest-list">
+                <div className="guest-list animate__animated animate__fadeIn">
                   {GUEST_LIST.map((item, index) => (
                     <div
                       className="guest-list-item"
                       key={index}
                       onClick={() => {
                         setGusetStartSig(true);
+
+                        setGuestId(index);
                       }}
                     >
                       {item}
@@ -303,9 +421,24 @@ export default function Home() {
       {hasSuccess && (
         <div className="success-page">
           {hasThanks && (
-            <>
-              <Image src={dataURL} alt="success" width={520} height={604} />
-            </>
+            <div className="promise-page-copy">
+              <Image
+                style={{
+                  position: "absolute",
+                  bottom: !successAnimation ? 48 : "50%",
+                  right: !successAnimation ? 48 : "50%",
+                  transform: !successAnimation
+                    ? "scale(1)"
+                    : "translate(50%, 50%) scale(4.0)",
+                  transition: "all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                  zIndex: successAnimation ? 1 : 1000,
+                }}
+                src={dataURL}
+                alt="promise"
+                width={150}
+                height={180}
+              />
+            </div>
           )}
 
           {!hasThanks && (
@@ -317,13 +450,22 @@ export default function Home() {
                   width={170}
                   height={170}
                 />
-                感謝參與！
+                <span style={{ marginLeft: 24 }}>感謝參與！</span>
               </div>
               <button
                 className={`clear-button `}
                 style={{ position: "absolute", bottom: 92 }}
                 onClick={() => {
-                  window.location.reload();
+                  // 初始化所有状态
+                  setGuestId(0);
+                  setGusetStartSig(false);
+                  setGuestMode(guestMode);
+                  setHasSig(false);
+                  setHasPromise(false);
+                  setHasSuccess(false);
+                  setImageAnimation(false);
+                  setPromiseAnimation(true);
+                  setSuccessAnimation(false);
                 }}
               >
                 返回主頁
@@ -332,6 +474,8 @@ export default function Home() {
           )}
         </div>
       )}
+
+      <div onClick={openDisplayMenu} className="display-menu"></div>
 
       <FullSpin open={hasLoading} />
     </div>

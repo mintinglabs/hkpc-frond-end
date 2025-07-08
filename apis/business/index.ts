@@ -8,23 +8,27 @@ interface UploadPortraitRequest {
 export const uploadSigFile = (
   data: UploadPortraitRequest,
   type: 1 | 0,
-  name: string
+  name: string,
+  guestId?: number
 ) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formData: any = new FormData();
-  formData.append("file", data.file, "ab.png");
+  formData.append("file", data.file, name);
   formData.append("name", name);
   formData.append("type", type.toString());
+  if (guestId !== undefined) {
+    formData.append("extraData", guestId.toString());
+  }
 
-  return request.post("/hkpc-api/v1/idata/upload", formData, {
+  return request.post("/hkpc-api/v1/idata/upload-signature", formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
 };
 
-export const getOldSigList = (query: { type: 1 | 0; limit: number }) => {
-  return request.get("/hkpc-api/v1/idata/list", {
+export const getSigList = (query: { limit: number; vipLimit: number }) => {
+  return request.get("/hkpc-api/v1/idata/multi-list", {
     params: query,
   });
 };
