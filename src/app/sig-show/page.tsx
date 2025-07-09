@@ -160,102 +160,97 @@ export default function Home() {
     try {
       const res: any = await getSigList({ limit, vipLimit });
 
-      if (
-        res.result.list.length !== messages.length ||
-        res.result.vipList.length !== guestMessages.length
-      ) {
-        // 获取新的list数据
-        const newList = res.result.list.map(
-          (item: any) => `${baseURL}${item.file.filepath}`
+      // 获取新的list数据
+      const newList = res.result.list.map(
+        (item: any) => `${baseURL}${item.file.filepath}`
+      );
+
+      // 获取新的vipList数据，包含位置信息
+      const newVipList = res.result.vipList.map((item: any) => {
+        if (item.extraData) {
+          return {
+            url: `${baseURL}${item.file.filepath}`,
+            position: Number(item.extraData), // extraData 就是位置数字
+          };
+        }
+        return null;
+      });
+
+      // 去重并排序：根据位置信息排序数组
+      setGuestMessages((prev) => {
+        // 将现有数据转换为带位置信息的格式
+        const existingItems = prev.map((url, index) => ({
+          url,
+          position: index,
+        }));
+
+        // 过滤掉null值，只保留有效的URL
+        const validExistingItems = existingItems.filter(
+          (item) => item.url !== null
         );
 
-        // 获取新的vipList数据，包含位置信息
-        const newVipList = res.result.vipList.map((item: any) => {
-          if (item.extraData) {
-            return {
-              url: `${baseURL}${item.file.filepath}`,
-              position: item.extraData, // extraData 就是位置数字
-            };
+        // 获取新的有效项目
+        const validNewItems = newVipList.filter(
+          (item: { url: string; position: number } | null) => item !== null
+        );
+
+        // 合并现有和新项目
+        const allItems = [...validExistingItems, ...validNewItems];
+
+        // 按位置排序
+        const sortedItems = allItems.sort((a, b) => a.position - b.position);
+
+        // 转换为字符串数组，保持null位置
+        const result: (string | null)[] = [];
+        sortedItems.forEach((item) => {
+          // 确保数组长度足够
+          while (result.length <= item.position) {
+            result.push(null);
           }
-          return null;
+          result[item.position] = item.url;
         });
 
-        // 去重并排序：根据位置信息排序数组
-        setGuestMessages((prev) => {
-          // 将现有数据转换为带位置信息的格式
-          const existingItems = prev.map((url, index) => ({
-            url,
-            position: index,
-          }));
+        return result;
+      });
 
-          // 过滤掉null值，只保留有效的URL
-          const validExistingItems = existingItems.filter(
-            (item) => item.url !== null
-          );
+      // 为新的消息创建随机位置
+      const newMessages: PositionedMessage[] = newList.map((url: string) => {
+        const { x, y } = generateRandomPosition();
+        const messageId = Date.now().toString() + Math.random().toString();
+        return {
+          url: url,
+          x,
+          y,
+          id: messageId,
+          hasAnimation: true, // 新消息添加动画
+        };
+      });
 
-          // 获取新的有效项目
-          const validNewItems = newVipList.filter(
-            (item: { url: string; position: number } | null) => item !== null
-          );
-
-          // 合并现有和新项目
-          const allItems = [...validExistingItems, ...validNewItems];
-
-          // 按位置排序
-          const sortedItems = allItems.sort((a, b) => a.position - b.position);
-
-          // 转换为字符串数组，保持null位置
-          const result: (string | null)[] = [];
-          sortedItems.forEach((item) => {
-            // 确保数组长度足够
-            while (result.length <= item.position) {
-              result.push(null);
-            }
-            result[item.position] = item.url;
-          });
-
-          return result;
+      // 去重：只添加不存在的消息
+      setMessages((prev) => {
+        const existingUrls = new Set(
+          prev.map((msg) => msg.url.split("&t=")[0])
+        ); // 去掉时间戳比较
+        const uniqueNewMessages = newMessages.filter((msg) => {
+          const baseUrl = msg.url.split("&t=")[0];
+          return !existingUrls.has(baseUrl);
         });
 
-        // 为新的消息创建随机位置
-        const newMessages: PositionedMessage[] = newList.map((url: string) => {
-          const { x, y } = generateRandomPosition();
-          const messageId = Date.now().toString() + Math.random().toString();
-          return {
-            url: `${url}&t=${Date.now()}`,
-            x,
-            y,
-            id: messageId,
-            hasAnimation: true, // 新消息添加动画
-          };
+        // 为新消息设置动画停止定时器
+        uniqueNewMessages.forEach((msg) => {
+          setTimeout(() => {
+            setMessages((currentMessages) =>
+              currentMessages.map((currentMsg) =>
+                currentMsg.id === msg.id
+                  ? { ...currentMsg, hasAnimation: false }
+                  : currentMsg
+              )
+            );
+          }, ANIMATION_DURATION);
         });
-
-        // 去重：只添加不存在的消息
-        setMessages((prev) => {
-          const existingUrls = new Set(
-            prev.map((msg) => msg.url.split("&t=")[0])
-          ); // 去掉时间戳比较
-          const uniqueNewMessages = newMessages.filter((msg) => {
-            const baseUrl = msg.url.split("&t=")[0];
-            return !existingUrls.has(baseUrl);
-          });
-
-          // 为新消息设置动画停止定时器
-          uniqueNewMessages.forEach((msg) => {
-            setTimeout(() => {
-              setMessages((currentMessages) =>
-                currentMessages.map((currentMsg) =>
-                  currentMsg.id === msg.id
-                    ? { ...currentMsg, hasAnimation: false }
-                    : currentMsg
-                )
-              );
-            }, ANIMATION_DURATION);
-          });
-
-          return [...prev, ...uniqueNewMessages];
-        });
-      }
+        // 保留最后 50个
+        return [...prev, ...uniqueNewMessages].slice(-50);
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -272,11 +267,11 @@ export default function Home() {
         {guestMessages.map((item, index) => (
           <React.Fragment key={index}>
             <img
-              src={`${item}&t=${Date.now()}`}
+              src={item || "/"}
               alt="guest"
               width={IMAGE_SIZE}
               height={IMAGE_SIZE}
-              className={`${
+              className={`w-[99px] h-[140px] ${
                 initialAnimationActive
                   ? "animate__animated animate__pulse animate__infinite"
                   : ""
@@ -298,7 +293,7 @@ export default function Home() {
           alt="sig"
           width={IMAGE_SIZE}
           height={IMAGE_SIZE}
-          className={`absolute ${
+          className={`absolute w-[99px] h-[140px] ${
             initialAnimationActive || item.hasAnimation
               ? "animate__animated animate__pulse animate__infinite"
               : ""

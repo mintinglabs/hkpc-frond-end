@@ -7,7 +7,7 @@ import FullSpin from "../../components/FullSpin";
 import "animate.css";
 // import { useWebSocket } from "../../hooks/websocket";
 
-const GUEST_LIST = ["簡啟恩", "李力持", "周一鳴", "鄧飛", "葉雲龍"];
+const GUEST_LIST = ["嘉賓 1", "嘉賓 2", "嘉賓 3", "嘉賓 4", "嘉賓 5"];
 
 export default function Home() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,9 +30,13 @@ export default function Home() {
   const [randomColor, setRandomColor] = useState(0);
   const [randomShield, setRandomShield] = useState(0);
 
-  useEffect(() => {
+  const resetColorRandom = () => {
     setRandomColor(Math.floor(Math.random() * 3));
     setRandomShield(Math.floor(Math.random() * 3));
+  };
+
+  useEffect(() => {
+    resetColorRandom();
   }, []);
 
   const clear = () => {
@@ -171,7 +175,6 @@ export default function Home() {
         const res: any = await uploadSigFile(
           { file: compressedBlob as File },
           guestMode ? 1 : 0,
-          "ab.png",
           guestMode ? guestId : undefined
         );
 
@@ -219,7 +222,18 @@ export default function Home() {
     setTimeout(() => {
       if (saveCount >= 5) {
         setGuestMode(!guestMode);
+        // 初始化所有状态
+        setGusetStartSig(false); // 嘉賓位置編號
+        setHasSig(false); // 簽名
+        setHasPromise(false); // 承諾
+        setHasSuccess(false); // 成功
+        setImageAnimation(false); // 圖片動畫
+        setPromiseAnimation(true); // 承諾動畫
+        setSuccessAnimation(false); // 成功動畫
         setSaveCount(0);
+
+        // 清除畫板
+        sigRef?.current?.clear();
         return;
       }
       setSaveCount(0);
@@ -450,7 +464,9 @@ export default function Home() {
                   width={170}
                   height={170}
                 />
-                <span style={{ marginLeft: 24 }}>感謝參與！</span>
+                <span style={{ marginLeft: 20, letterSpacing: 3.2 }}>
+                  感謝參與！
+                </span>
               </div>
               <button
                 className={`clear-button `}
@@ -466,6 +482,8 @@ export default function Home() {
                   setImageAnimation(false);
                   setPromiseAnimation(true);
                   setSuccessAnimation(false);
+                  setHasThanks(true);
+                  resetColorRandom();
                 }}
               >
                 返回主頁

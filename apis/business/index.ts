@@ -8,13 +8,11 @@ interface UploadPortraitRequest {
 export const uploadSigFile = (
   data: UploadPortraitRequest,
   type: 1 | 0,
-  name: string,
   guestId?: number
 ) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const formData: any = new FormData();
-  formData.append("file", data.file, name);
-  formData.append("name", name);
+  formData.append("file", data.file, "ab.png");
   formData.append("type", type.toString());
   if (guestId !== undefined) {
     formData.append("extraData", guestId.toString());
