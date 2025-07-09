@@ -25,10 +25,8 @@ export default function Home() {
     new Set()
   );
 
-  const usedPositions = useRef<{ x: number; y: number }[]>([]);
   const animationTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  const IMAGE_SIZE = 100;
   const PADDING = 20;
   const ANIMATION_DURATION = 10000; // 10秒
 
@@ -36,15 +34,15 @@ export default function Home() {
   const centerExclusionZone = useRef({
     x: 0,
     y: 0,
-    width: 1000,
-    height: 419,
+    width: 1200,
+    height: 519,
   });
   useEffect(() => {
     centerExclusionZone.current = {
       x: window.innerWidth / 2 - 500,
       y: window.innerHeight / 2 - 209,
-      width: 1000,
-      height: 419,
+      width: 1200,
+      height: 519,
     };
   }, []);
 
@@ -70,77 +68,84 @@ export default function Home() {
     y: number,
     positions: { x: number; y: number }[]
   ) => {
+    const imageWidth = 198; // 2倍宽度
+    const imageHeight = 282; // 2倍高度
     return positions.some(
       (pos) =>
-        Math.abs(pos.x - x) < IMAGE_SIZE + PADDING &&
-        Math.abs(pos.y - y) < IMAGE_SIZE + PADDING
+        Math.abs(pos.x - x) < imageWidth + PADDING &&
+        Math.abs(pos.y - y) < imageHeight + PADDING
     );
   };
 
   const isInsideCenterZone = (x: number, y: number) => {
+    const imageWidth = 198; // 2倍宽度
+    const imageHeight = 282; // 2倍高度
     return (
-      x + IMAGE_SIZE > centerExclusionZone.current.x &&
+      x + imageWidth > centerExclusionZone.current.x &&
       x < centerExclusionZone.current.x + centerExclusionZone.current.width &&
-      y + IMAGE_SIZE > centerExclusionZone.current.y &&
+      y + imageHeight > centerExclusionZone.current.y &&
       y < centerExclusionZone.current.y + centerExclusionZone.current.height
     );
   };
 
-  const generateRandomPosition = (): { x: number; y: number } => {
-    // 如果位置记录太多，清理旧记录
-    if (usedPositions.current.length > 100) {
-      usedPositions.current = usedPositions.current.slice(-30); // 只保留最近30个位置
-    }
+  const generateRandomPosition = (
+    currentMessages: PositionedMessage[]
+  ): { x: number; y: number } => {
+    // 获取当前所有消息的位置，用于重叠检查
+    const currentPositions = currentMessages.map((msg) => ({
+      x: msg.x,
+      y: msg.y,
+    }));
 
+    const imageWidth = 198; // 2倍宽度
+    const imageHeight = 282; // 2倍高度
     const maxAttempts = 300; // 增加尝试次数
     for (let i = 0; i < maxAttempts; i++) {
-      const x = Math.floor(Math.random() * (window.innerWidth - IMAGE_SIZE));
-      const y = Math.floor(Math.random() * (window.innerHeight - IMAGE_SIZE));
+      const x = Math.floor(Math.random() * (window.innerWidth - imageWidth));
+      const y = Math.floor(Math.random() * (window.innerHeight - imageHeight));
 
       if (
         !isInsideCenterZone(x, y) &&
-        !isOverlapping(x, y, usedPositions.current)
+        !isOverlapping(x, y, currentPositions) // 只检查与当前显示消息的重叠
       ) {
-        usedPositions.current.push({ x, y });
         return { x, y };
       }
     }
 
     // 如果还是找不到，尝试在屏幕边缘区域放置
     const edgeZones = [
-      { x: 0, y: 0, width: 200, height: window.innerHeight }, // 左边
+      { x: 0, y: 0, width: 400, height: window.innerHeight }, // 左边，增加宽度适应更大的图片
       {
-        x: window.innerWidth - 200,
+        x: window.innerWidth - 400,
         y: 0,
-        width: 200,
+        width: 400,
         height: window.innerHeight,
-      }, // 右边
-      { x: 0, y: 0, width: window.innerWidth, height: 200 }, // 上边
+      }, // 右边，增加宽度适应更大的图片
+      { x: 0, y: 0, width: window.innerWidth, height: 400 }, // 上边，增加高度适应更大的图片
       {
         x: 0,
-        y: window.innerHeight - 200,
+        y: window.innerHeight - 400,
         width: window.innerWidth,
-        height: 200,
-      }, // 下边
+        height: 400,
+      }, // 下边，增加高度适应更大的图片
     ];
 
     for (const zone of edgeZones) {
       for (let i = 0; i < 50; i++) {
         const x =
-          zone.x + Math.floor(Math.random() * (zone.width - IMAGE_SIZE));
+          zone.x + Math.floor(Math.random() * (zone.width - imageWidth));
         const y =
-          zone.y + Math.floor(Math.random() * (zone.height - IMAGE_SIZE));
+          zone.y + Math.floor(Math.random() * (zone.height - imageHeight));
 
-        if (!isOverlapping(x, y, usedPositions.current)) {
-          usedPositions.current.push({ x, y });
+        if (!isOverlapping(x, y, currentPositions)) {
           return { x, y };
         }
       }
     }
 
     // 最后的fallback：返回一个随机位置，即使可能重叠
-    const x = Math.floor(Math.random() * (window.innerWidth - IMAGE_SIZE));
-    const y = Math.floor(Math.random() * (window.innerHeight - IMAGE_SIZE));
+    const x = Math.floor(Math.random() * (window.innerWidth - imageWidth));
+    const y = Math.floor(Math.random() * (window.innerHeight - imageHeight));
 
     // 确保不在中心区域
     if (!isInsideCenterZone(x, y)) {
@@ -148,7 +153,7 @@ export default function Home() {
     }
 
     // 如果随机位置在中心区域，找一个边缘位置
-    return { x: 100, y: 100 };
+    return { x: 200, y: 200 };
   };
 
   useEffect(() => {
@@ -213,43 +218,55 @@ export default function Home() {
         return result;
       });
 
-      // 为新的消息创建随机位置
-      const newMessages: PositionedMessage[] = newList.map((url: string) => {
-        const { x, y } = generateRandomPosition();
-        const messageId = Date.now().toString() + Math.random().toString();
-        return {
-          url: url,
-          x,
-          y,
-          id: messageId,
-          hasAnimation: true, // 新消息添加动画
-        };
-      });
-
-      // 去重：只添加不存在的消息
+      // 处理 messages 数据：每次请求都重新构建消息列表
       setMessages((prev) => {
-        const existingUrls = new Set(
-          prev.map((msg) => msg.url.split("&t=")[0])
-        ); // 去掉时间戳比较
-        const uniqueNewMessages = newMessages.filter((msg) => {
-          const baseUrl = msg.url.split("&t=")[0];
-          return !existingUrls.has(baseUrl);
-        });
-
-        // 为新消息设置动画停止定时器
-        uniqueNewMessages.forEach((msg) => {
-          setTimeout(() => {
-            setMessages((currentMessages) =>
-              currentMessages.map((currentMsg) =>
-                currentMsg.id === msg.id
-                  ? { ...currentMsg, hasAnimation: false }
-                  : currentMsg
-              )
+        // 将接口返回的数据转换为消息格式
+        const interfaceMessages: PositionedMessage[] = newList.map(
+          (url: string) => {
+            // 检查是否已存在（基于URL，去掉时间戳）
+            const baseUrl = url.split("&t=")[0];
+            const existingMessage = prev.find(
+              (msg) => msg.url.split("&t=")[0] === baseUrl
             );
-          }, ANIMATION_DURATION);
-        });
-        // 保留最后 50个
-        return [...prev, ...uniqueNewMessages].slice(-50);
+
+            if (existingMessage) {
+              // 如果已存在，保持原有位置和状态，不添加动画
+              return {
+                ...existingMessage,
+                hasAnimation: false, // 确保没有动画
+              };
+            } else {
+              // 如果是新消息，计算新位置并添加动画
+              const { x, y } = generateRandomPosition(prev);
+              const messageId =
+                Date.now().toString() + Math.random().toString();
+              const newMessage = {
+                url: url,
+                x,
+                y,
+                id: messageId,
+                hasAnimation: true, // 只有新消息添加动画
+              };
+
+              // 为新消息设置动画停止定时器
+              setTimeout(() => {
+                setMessages((currentMessages) =>
+                  currentMessages.map((currentMsg) =>
+                    currentMsg.id === newMessage.id
+                      ? { ...currentMsg, hasAnimation: false }
+                      : currentMsg
+                  )
+                );
+              }, ANIMATION_DURATION);
+
+              return newMessage;
+            }
+          }
+        );
+
+        // 保留最后50个消息
+        const finalMessages = interfaceMessages.slice(-50);
+        return finalMessages;
       });
     } catch (error) {
       console.log(error);
@@ -263,24 +280,28 @@ export default function Home() {
   return (
     <div className="w-full h-screen relative overflow-hidden bg-[url('/sig-show_bg.png')] bg-cover bg-center">
       {/* guestMessages 居中 */}
-      <div className="w-[1000px] h-[419px] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
+      <div className="w-[1200px] h-[519px] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
         {guestMessages.map((item, index) => (
           <React.Fragment key={index}>
-            <img
-              src={item || "/"}
-              alt="guest"
-              width={IMAGE_SIZE}
-              height={IMAGE_SIZE}
-              className={`w-[99px] h-[173px] ${
-                initialAnimationActive
-                  ? "animate__animated animate__pulse animate__infinite"
-                  : ""
-              } guest-message-${index}`}
-              onError={(e) => {
-                // 图片加载失败时隐藏元素
-                e.currentTarget.style.display = "none";
-              }}
-            />
+            {item ? (
+              <img
+                src={item || "/"}
+                alt="guest"
+                width={198}
+                height={282}
+                className={`w-[198px] h-[282px] object-contain bg-transparent transition-opacity duration-300 ${
+                  initialAnimationActive
+                    ? "animate__animated animate__pulse animate__infinite"
+                    : ""
+                } guest-message-${index}`}
+                onError={(e) => {
+                  // 图片加载失败时隐藏元素
+                  e.currentTarget.style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="w-[198px] h-[282px] bg-transparent"></div>
+            )}
           </React.Fragment>
         ))}
       </div>
@@ -291,9 +312,9 @@ export default function Home() {
           key={item.id}
           src={item.url}
           alt="sig"
-          width={IMAGE_SIZE}
-          height={IMAGE_SIZE}
-          className={`absolute w-[99px] h-[173px] ${
+          width={198}
+          height={282}
+          className={`absolute w-[198px] h-[282px] object-contain bg-transparent transition-opacity duration-300 ${
             initialAnimationActive || item.hasAnimation
               ? "animate__animated animate__pulse animate__infinite"
               : ""

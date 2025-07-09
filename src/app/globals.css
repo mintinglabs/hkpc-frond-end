@@ -353,20 +353,20 @@ button:active {
 
 .guest-message-1 {
   position: absolute;
-  top: 205px;
-  left: 222px;
+  top: 240px;
+  left: 245px;
 }
 
 .guest-message-2 {
   position: absolute;
   top: 112px;
-  left: 427px;
+  left: 470px;
 }
 
 .guest-message-3 {
   position: absolute;
   top: 30px;
-  right: 249px;
+  right: 260px;
 }
 
 .guest-message-4 {

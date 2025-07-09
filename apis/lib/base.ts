@@ -15,7 +15,7 @@ type RequestData = Record<string, unknown> | unknown[] | null;
 const createAxiosInstance = (config?: AxiosRequestConfig): AxiosInstance => {
   const instance = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "/",
-    timeout: 60 * 1000,
+    timeout: 3000,
     headers: {
       "Content-Type": "application/json",
     },

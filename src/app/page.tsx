@@ -54,24 +54,39 @@ export default function Home() {
     setHasSig(false);
     sigRef?.current?.clear();
   };
-  // 压缩图片的函数
+  // 压缩图片的函数，固定99x141容器，图片居中显示
   const compressImage = (
     canvas: HTMLCanvasElement,
     targetSizeKB: number = 500
   ): Promise<Blob> => {
     return new Promise((resolve) => {
-      const compressWithSize = (maxWidth: number, maxHeight: number): void => {
-        // 计算压缩后的尺寸
-        let { width, height } = canvas;
+      const compressWithSize = (maxWidth: number): void => {
+        // 固定容器尺寸，按比例放大以提高清晰度
+        const containerWidth = 495; // 99 * 5
+        const containerHeight = 705; // 141 * 5
 
-        // 如果图片太大，按比例缩小
-        if (width > maxWidth || height > maxHeight) {
-          const ratio = Math.min(maxWidth / width, maxHeight / height);
-          width = Math.floor(width * ratio);
-          height = Math.floor(height * ratio);
+        // 计算图片在容器中的显示尺寸，保持宽高比
+        const imageAspectRatio = canvas.width / canvas.height;
+        const containerAspectRatio = containerWidth / containerHeight;
+
+        let imageWidth, imageHeight;
+        let offsetX, offsetY;
+
+        if (imageAspectRatio > containerAspectRatio) {
+          // 图片更宽，以宽度为准
+          imageWidth = containerWidth * 0.8; // 留20%边距
+          imageHeight = imageWidth / imageAspectRatio;
+          offsetX = (containerWidth - imageWidth) / 2;
+          offsetY = (containerHeight - imageHeight) / 2;
+        } else {
+          // 图片更高，以高度为准
+          imageHeight = containerHeight * 0.8; // 留20%边距
+          imageWidth = imageHeight * imageAspectRatio;
+          offsetX = (containerWidth - imageWidth) / 2;
+          offsetY = (containerHeight - imageHeight) / 2;
         }
 
-        // 创建压缩用的canvas
+        // 创建固定尺寸的canvas
         const compressedCanvas = document.createElement("canvas");
         const compressedCtx = compressedCanvas.getContext("2d");
         if (!compressedCtx) {
@@ -81,12 +96,18 @@ export default function Home() {
           return;
         }
 
-        // 设置压缩后的尺寸
-        compressedCanvas.width = width;
-        compressedCanvas.height = height;
+        // 设置固定尺寸
+        compressedCanvas.width = containerWidth;
+        compressedCanvas.height = containerHeight;
 
-        // 绘制压缩后的图片
-        compressedCtx.drawImage(canvas, 0, 0, width, height);
+        // 绘制图片到容器中，居中显示
+        compressedCtx.drawImage(
+          canvas,
+          offsetX,
+          offsetY,
+          imageWidth,
+          imageHeight
+        );
 
         // 转换为blob，使用PNG格式保持透明
         compressedCanvas.toBlob((blob) => {
@@ -97,17 +118,17 @@ export default function Home() {
 
           // 检查文件大小
           const sizeKB = blob.size / 1024;
-          if (sizeKB <= targetSizeKB || (maxWidth <= 400 && maxHeight <= 300)) {
+          if (sizeKB <= targetSizeKB || maxWidth <= 400) {
             resolve(blob);
           } else {
             // 如果文件还是太大，继续缩小尺寸
-            compressWithSize(maxWidth - 100, maxHeight - 75);
+            compressWithSize(maxWidth - 50);
           }
         }, "image/png");
       };
 
-      // 从1200x900开始压缩
-      compressWithSize(1200, 900);
+      // 从1200开始压缩
+      compressWithSize(1200);
     });
   };
 
@@ -119,21 +140,9 @@ export default function Home() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // 创建临时 canvas 来合并背景和签名
-    const tempCanvas = document.createElement("canvas");
-    const tempCtx = tempCanvas.getContext("2d");
-    if (!tempCtx) return;
-
-    // 设置临时 canvas 尺寸
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-
-    // 背景图片配置
-    const bgConfig = {
-      widthRatio: 0.8, // 宽度比例 60%
-      heightRatio: 0.8, // 高度比例 80%（可选，如果不想按比例）
-      useAspectRatio: true, // 是否保持宽高比
-    };
+    // 固定容器尺寸，按比例放大以提高清晰度
+    const containerWidth = 495; // 99 * 5
+    const containerHeight = 705; // 141 * 5
 
     // 加载并绘制背景图片
     const bgImage = new window.Image();
@@ -142,27 +151,42 @@ export default function Home() {
     bgImage.onload = async () => {
       try {
         setHasLoading(true);
-        // 计算背景图片的尺寸
-        const bgWidth = tempCanvas.width * bgConfig.widthRatio;
-        let bgHeight;
 
-        if (bgConfig.useAspectRatio) {
-          // 按原始图片比例计算高度
-          bgHeight = (bgImage.height / bgImage.width) * bgWidth;
+        // 创建固定尺寸的临时canvas
+        const tempCanvas = document.createElement("canvas");
+        const tempCtx = tempCanvas.getContext("2d");
+        if (!tempCtx) return;
+
+        // 设置固定尺寸
+        tempCanvas.width = containerWidth;
+        tempCanvas.height = containerHeight;
+
+        // 计算背景图片在容器中的显示尺寸，保持宽高比
+        const bgAspectRatio = bgImage.width / bgImage.height;
+        const containerAspectRatio = containerWidth / containerHeight;
+
+        let bgWidth, bgHeight;
+        let bgX, bgY;
+
+        if (bgAspectRatio > containerAspectRatio) {
+          // 背景图片更宽，以宽度为准
+          bgWidth = containerWidth * 0.9; // 留10%边距
+          bgHeight = bgWidth / bgAspectRatio;
+          bgX = (containerWidth - bgWidth) / 2;
+          bgY = (containerHeight - bgHeight) / 2;
         } else {
-          // 使用自定义高度比例
-          bgHeight = tempCanvas.height * bgConfig.heightRatio;
+          // 背景图片更高，以高度为准
+          bgHeight = containerHeight * 0.9; // 留10%边距
+          bgWidth = bgHeight * bgAspectRatio;
+          bgX = (containerWidth - bgWidth) / 2;
+          bgY = (containerHeight - bgHeight) / 2;
         }
-
-        // 计算背景图片的位置（居中）
-        const bgX = (tempCanvas.width - bgWidth) / 2;
-        const bgY = (tempCanvas.height - bgHeight) / 2;
 
         // 先绘制背景图片
         tempCtx.drawImage(bgImage, bgX, bgY, bgWidth, bgHeight);
 
-        // 再绘制签名内容
-        tempCtx.drawImage(canvas, 0, 0);
+        // 再绘制签名内容，签名覆盖在背景上
+        tempCtx.drawImage(canvas, 0, 0, containerWidth, containerHeight);
 
         // 压缩图片到500KB以下
         const compressedBlob = await compressImage(tempCanvas, 500);
