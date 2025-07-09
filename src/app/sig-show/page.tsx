@@ -271,7 +271,7 @@ export default function Home() {
               alt="guest"
               width={IMAGE_SIZE}
               height={IMAGE_SIZE}
-              className={`w-[99px] h-[140px] ${
+              className={`w-[99px] h-[173px] ${
                 initialAnimationActive
                   ? "animate__animated animate__pulse animate__infinite"
                   : ""
@@ -293,7 +293,7 @@ export default function Home() {
           alt="sig"
           width={IMAGE_SIZE}
           height={IMAGE_SIZE}
-          className={`absolute w-[99px] h-[140px] ${
+          className={`absolute w-[99px] h-[173px] ${
             initialAnimationActive || item.hasAnimation
               ? "animate__animated animate__pulse animate__infinite"
               : ""
