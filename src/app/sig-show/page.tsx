@@ -42,14 +42,14 @@ export default function Home() {
   const centerExclusionZone = useRef({
     x: 0,
     y: 0,
-    width: 800,
+    width: 1000,
     height: 319,
   });
   useEffect(() => {
     centerExclusionZone.current = {
       x: window.innerWidth / 2 - 400,
       y: window.innerHeight / 2 - 109,
-      width: 800,
+      width: 1000,
       height: 319,
     };
   }, []);
@@ -472,7 +472,7 @@ export default function Home() {
   return (
     <div className="w-full h-screen relative overflow-hidden bg-[url('/sig-show_bg.png')] bg-cover bg-center">
       {/* guestMessages 居中 */}
-      <div className="w-[800px] h-[319px] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
+      <div className="w-[1000px] h-[319px] absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] flex justify-center items-center gap-4 z-10">
         {guestMessages.map((item, index) => (
           <React.Fragment key={index}>
             {item ? (
@@ -489,7 +489,7 @@ export default function Home() {
                   !initialAnimationActive && item.hasAnimation
                     ? "scale-[5] z-[100]"
                     : "scale-[1] z-0"
-                } `}
+                }`}
                 onError={(e) => {
                   // 图片加载失败时隐藏元素
                   e.currentTarget.style.display = "none";
@@ -505,34 +505,32 @@ export default function Home() {
       {/* messages 随机分布 */}
       {/* <div className="w-full h-full absolute top-0 left-0 flex flex-wrap"> */}
       {messages.map((item) => (
-        <div key={item.id} className="animate__animated animate__fadeIn">
-          <img
-            src={item.url}
-            alt="sig"
-            width={140}
-            height={198}
-            className={`absolute w-[140px] h-[198px] object-contain bg-transparent transition-all duration-300 ${
-              initialAnimationActive || item.hasAnimation
-                ? "animate__animated animate__pulse animate__infinite"
-                : ""
-            } ${
-              !initialAnimationActive && item.hasAnimation
-                ? "scale-[2] z-[100]"
-                : "scale-[1] z-0"
-            } 
-              
-            `}
-            style={{
-              top: item.y,
-              left: item.x,
-              marginTop: item.mt,
-              marginLeft: item.ml,
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-        </div>
+        <img
+          key={item.id}
+          src={item.url}
+          alt="sig"
+          width={140}
+          height={198}
+          className={`absolute w-[140px] h-[198px] object-contain bg-transparent transition-all duration-300 ${
+            initialAnimationActive || item.hasAnimation
+              ? "animate__animated animate__pulse animate__infinite"
+              : ""
+          } ${
+            !initialAnimationActive && item.hasAnimation
+              ? "scale-[2] z-[1000]"
+              : "scale-[1] z-0"
+          }`}
+          style={{
+            top: item.y,
+            left: item.x,
+            marginTop: item.mt,
+            marginLeft: item.ml,
+            position: "absolute",
+          }}
+          onError={(e) => {
+            e.currentTarget.style.display = "none";
+          }}
+        />
       ))}
       {/* </div> */}
     </div>
