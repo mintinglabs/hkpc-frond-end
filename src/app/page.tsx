@@ -62,8 +62,8 @@ export default function Home() {
     return new Promise((resolve) => {
       const compressWithSize = (maxWidth: number): void => {
         // 固定容器尺寸，按比例放大以提高清晰度
-        const containerWidth = 495; // 99 * 5
-        const containerHeight = 705; // 141 * 5
+        const containerWidth = 625;
+        const containerHeight = 900;
 
         // 计算图片在容器中的显示尺寸，保持宽高比
         const imageAspectRatio = canvas.width / canvas.height;
@@ -141,8 +141,8 @@ export default function Home() {
     if (!ctx) return;
 
     // 固定容器尺寸，按比例放大以提高清晰度
-    const containerWidth = 495; // 99 * 5
-    const containerHeight = 705; // 141 * 5
+    const containerWidth = 625;
+    const containerHeight = 900;
 
     // 加载并绘制背景图片
     const bgImage = new window.Image();
@@ -243,7 +243,7 @@ export default function Home() {
   const openDisplayMenu = () => {
     setSaveCount(saveCount + 1);
     setTimeout(() => {
-      if (saveCount >= 5) {
+      if (saveCount >= 3) {
         setGuestMode(!guestMode);
         // 初始化所有状态
         setGusetStartSig(false); // 嘉賓位置編號
