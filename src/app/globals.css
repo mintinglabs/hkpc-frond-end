@@ -147,11 +147,11 @@ button:active {
 }
 
 .display-menu {
-  width: 100%;
+  width: 300px;
   height: 92px;
   position: absolute;
   bottom: 0;
-  left: 0;
+  right: 0;
 }
 
 

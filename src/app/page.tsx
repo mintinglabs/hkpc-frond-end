@@ -213,7 +213,6 @@ export default function Home() {
           }
           setHasSuccess(true);
         }
-
         // 清除画板
         clear();
         setHasSig(false);
@@ -343,7 +342,12 @@ export default function Home() {
                 />
               </div>
               <button
-                style={{ marginTop: 55 }}
+                style={{
+                  marginTop: 55,
+                  boxShadow: !promiseAnimation
+                    ? "none"
+                    : "0px 4px 4px 0px #0000001F",
+                }}
                 className={`confirm-button ${!hasSig ? "button-disabled" : ""}`}
                 onClick={sendPromise}
               >

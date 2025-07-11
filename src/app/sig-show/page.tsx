@@ -71,28 +71,6 @@ export default function Home() {
     };
   }, []);
 
-  const isOverlapping = (
-    x: number,
-    y: number,
-    positions: { x: number; y: number }[]
-  ) => {
-    const imageWidth = 140;
-    const imageHeight = 198;
-    const minDistance = imageWidth + 40; // 增加最小距离
-
-    return positions.some((pos) => {
-      const distanceX = Math.abs(pos.x - x);
-      const distanceY = Math.abs(pos.y - y);
-
-      // 使用更严格的重叠检测：矩形相交 + 最小距离
-      const isRectOverlapping =
-        distanceX < imageWidth && distanceY < imageHeight;
-      const isTooClose = distanceX < minDistance && distanceY < minDistance;
-
-      return isRectOverlapping || isTooClose;
-    });
-  };
-
   const isInsideCenterZone = (x: number, y: number) => {
     const imageWidth = 140;
     const imageHeight = 198;
@@ -111,7 +89,7 @@ export default function Home() {
     const imageWidth = 140;
     const imageHeight = 198;
     const padding = 25; // 调整间距以适应新的图片尺寸
-    const screenPadding = 160; // 屏幕边界 padding 增加到 200px
+    const screenPadding = 140; // 屏幕边界 padding
 
     // 获取当前所有消息的位置，用于重叠检查
     const currentPositions = currentMessages.map((msg) => ({
@@ -121,39 +99,25 @@ export default function Home() {
 
     console.log(`生成位置 - 当前消息数: ${currentPositions.length}`);
 
-    // 策略1: 网格系统分配
+    // 只使用策略1: 网格系统分配
     const gridSize = imageWidth + padding;
-    const availableWidth = window.innerWidth - imageWidth - screenPadding * 2;
-    const availableHeight =
-      window.innerHeight - imageHeight - screenPadding * 2;
-    const cols = Math.floor(availableWidth / gridSize);
-    const rows = Math.floor(availableHeight / gridSize);
+    const startX = screenPadding;
+    const startY = screenPadding;
+    const endX = window.innerWidth - imageWidth - screenPadding;
+    const endY = window.innerHeight - imageHeight - screenPadding;
 
-    console.log(`网格计算: ${cols}列 x ${rows}行 = ${cols * rows}个网格位置`);
-
-    // 创建可用网格列表
     const availableGrids: { x: number; y: number }[] = [];
-    for (let row = 0; row < rows; row++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * gridSize + screenPadding;
-        const y = row * gridSize + screenPadding;
-
-        // 检查是否在中心禁区
-        if (isInsideCenterZone(x, y)) {
-          console.log(`网格位置 (${col}, ${row}) 在中心禁区，跳过`);
-          continue;
-        }
-
-        // 检查是否与现有消息重叠
+    for (let y = startY; y <= endY; y += gridSize) {
+      for (let x = startX; x <= endX; x += gridSize) {
+        // 检查中心禁区...
+        if (isInsideCenterZone(x, y)) continue;
+        // 检查重叠...
         const isOccupied = currentPositions.some(
           (pos) =>
             Math.abs(pos.x - x) < gridSize && Math.abs(pos.y - y) < gridSize
         );
-
         if (!isOccupied) {
           availableGrids.push({ x, y });
-        } else {
-          console.log(`网格位置 (${col}, ${row}) 被占用，跳过`);
         }
       }
     }
@@ -168,143 +132,11 @@ export default function Home() {
       return selectedGrid;
     }
 
-    // 策略2: 径向分布（当网格不够用时）
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    const maxRadius =
-      Math.min(window.innerWidth, window.innerHeight) / 2 -
-      imageWidth -
-      screenPadding;
-
-    for (let attempt = 0; attempt < 100; attempt++) {
-      const radius = 200 + Math.random() * (maxRadius - 200);
-      const angle = Math.random() * 2 * Math.PI;
-
-      const x = centerX + radius * Math.cos(angle);
-      const y = centerY + radius * Math.sin(angle);
-
-      // 确保在边界内（考虑屏幕 padding）
-      const boundedX = Math.max(
-        screenPadding,
-        Math.min(window.innerWidth - imageWidth - screenPadding, x)
-      );
-      const boundedY = Math.max(
-        screenPadding,
-        Math.min(window.innerHeight - imageHeight - screenPadding, y)
-      );
-
-      if (
-        !isInsideCenterZone(boundedX, boundedY) &&
-        !isOverlapping(boundedX, boundedY, currentPositions)
-      ) {
-        return { x: boundedX, y: boundedY };
-      }
-    }
-
-    // 策略3: 边缘区域分布（考虑屏幕 padding）
-    const edgeZones = [
-      {
-        x: screenPadding,
-        y: screenPadding,
-        width: 300,
-        height: window.innerHeight - screenPadding * 2,
-      },
-      {
-        x: window.innerWidth - 300 - screenPadding,
-        y: screenPadding,
-        width: 300,
-        height: window.innerHeight - screenPadding * 2,
-      },
-      {
-        x: screenPadding,
-        y: screenPadding,
-        width: window.innerWidth - screenPadding * 2,
-        height: 300,
-      },
-      {
-        x: screenPadding,
-        y: window.innerHeight - 300 - screenPadding,
-        width: window.innerWidth - screenPadding * 2,
-        height: 300,
-      },
-    ];
-
-    for (const zone of edgeZones) {
-      for (let i = 0; i < 30; i++) {
-        const x = zone.x + Math.random() * (zone.width - imageWidth);
-        const y = zone.y + Math.random() * (zone.height - imageHeight);
-
-        if (
-          !isInsideCenterZone(x, y) &&
-          !isOverlapping(x, y, currentPositions)
-        ) {
-          return { x, y };
-        }
-      }
-    }
-
-    // 策略4: 智能随机分布（考虑屏幕 padding）
-    for (let i = 0; i < 200; i++) {
-      const x =
-        screenPadding +
-        Math.random() * (window.innerWidth - imageWidth - screenPadding * 2);
-      const y =
-        screenPadding +
-        Math.random() * (window.innerHeight - imageHeight - screenPadding * 2);
-
-      if (!isInsideCenterZone(x, y) && !isOverlapping(x, y, currentPositions)) {
-        return { x, y };
-      }
-    }
-
-    // 最后的fallback：找一个相对空旷的区域（考虑屏幕 padding）
-    const quadrants = [
-      {
-        x: screenPadding,
-        y: screenPadding,
-        width: (window.innerWidth - screenPadding * 2) / 2,
-        height: (window.innerHeight - screenPadding * 2) / 2,
-      },
-      {
-        x: screenPadding + (window.innerWidth - screenPadding * 2) / 2,
-        y: screenPadding,
-        width: (window.innerWidth - screenPadding * 2) / 2,
-        height: (window.innerHeight - screenPadding * 2) / 2,
-      },
-      {
-        x: screenPadding,
-        y: screenPadding + (window.innerHeight - screenPadding * 2) / 2,
-        width: (window.innerWidth - screenPadding * 2) / 2,
-        height: (window.innerHeight - screenPadding * 2) / 2,
-      },
-      {
-        x: screenPadding + (window.innerWidth - screenPadding * 2) / 2,
-        y: screenPadding + (window.innerHeight - screenPadding * 2) / 2,
-        width: (window.innerWidth - screenPadding * 2) / 2,
-        height: (window.innerHeight - screenPadding * 2) / 2,
-      },
-    ];
-
-    // 找到消息最少的象限
-    const quadrantCounts = quadrants.map((quadrant, index) => {
-      const count = currentPositions.filter(
-        (pos) =>
-          pos.x >= quadrant.x &&
-          pos.x < quadrant.x + quadrant.width &&
-          pos.y >= quadrant.y &&
-          pos.y < quadrant.y + quadrant.height
-      ).length;
-      return { index, count };
-    });
-
-    const leastCrowdedQuadrant = quadrantCounts.reduce((a, b) =>
-      a.count < b.count ? a : b
-    );
-    const quadrant = quadrants[leastCrowdedQuadrant.index];
-
+    // 如果没有可用网格，返回一个默认位置（屏幕边缘）
+    console.log("警告: 没有可用网格位置，使用默认位置");
     return {
-      x: quadrant.x + Math.random() * (quadrant.width - imageWidth),
-      y: quadrant.y + Math.random() * (quadrant.height - imageHeight),
+      x: screenPadding,
+      y: screenPadding,
     };
   };
 
